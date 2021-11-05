@@ -157,7 +157,7 @@ fn main() -> Result<(), CryptoAPIError> {
     let tmp = min_vector(&z);
     println!("{} {:?}", tmp.0, tmp.1);
 
-    let z: Vec<f64> = vec![2.54, 2.1, 1.5]; 
+    let z: Vec<f64> = vec![2.54, 2.1, 1.5, 1.6, 1.7, 1.8]; 
     println!("z = {:?}", z);
     
     let tmp = min_vector_samepadd(&z);
@@ -177,10 +177,11 @@ fn minfun(x_i:f64, x_j:f64) -> (f64, Vec<f64>) {
 }
 
 fn min_vector(x: &[f64]) -> (f64, Vec<Vec<f64>>) {
-//fn min_vector(x: &[f64]) -> (f64, Vec<f64>) {
-//fn min_vector(x: &[f64]) -> f64 {
     let n = x.len();
-    let m = n/2;
+    let k = (n as f64).log(2.0).ceil() as usize;
+    println!("{}", k);
+    let m = 2usize.pow(k as u32 - 1u32); 
+    //let m = n-n/2;
     println!("n,m: {},{}", n, m);
     if n > 1 {
         let x_i = min_vector(&x[..m]);
@@ -208,7 +209,7 @@ fn min_vector_samepadd(x: &[f64]) -> (f64, Vec<f64>) {
     let n = x.len();
     let k = (n as f64).log(2.0).ceil() as usize;
     println!("{}", k);
-    let m = 2usize.pow(k as u32);
+    let m = 2usize.pow(k as u32); // n; // 
     println!("{}", m);
     let mut v = vec![x[n-1]; m];
     println!("{:?}", v);

@@ -90,7 +90,7 @@ fn main() -> Result<(), CryptoAPIError> {
     let x0 = VectorLWE::encode_encrypt(&sk0, &x, &enc_bas)?;  
     println!("encrypted value {:?}", x0.decrypt_decode(&sk0).unwrap());
     x0.pp();
-
+    
     let minfun = |x_i:&VectorLWE, x_j:&VectorLWE| -> (VectorLWE, Vec<VectorLWE>) {
         let diff = x_i.sub_with_padding(&x_j).unwrap(); // x_i - x_j;
         let cmp = diff.bootstrap_nth_with_function(&bsk00, ind, &enc_cmp, 0).unwrap();
@@ -115,7 +115,53 @@ fn main() -> Result<(), CryptoAPIError> {
     println!("cmp {:?}", res.1[1].decrypt_decode(&sk0).unwrap());
     res.1[1].pp();
     //println!("pos {:?}", res.1[2].decrypt_decode(&sk0).unwrap());
-       
+    
+    let tmp = res.0.bootstrap_nth_with_function(&bsk00,|x| x, &enc_bas, 0).unwrap();
+    println!("min {:?}", tmp.decrypt_decode(&sk0).unwrap());
+    tmp.pp();
+
+    let minfun_bootstrap = |x_i:&VectorLWE, x_j:&VectorLWE| -> (VectorLWE, Vec<VectorLWE>) {
+        let res = minfun(x_i,x_j);
+        let min = res.0.bootstrap_nth_with_function(&bsk00,|x| x, &enc_bas, 0).unwrap();
+        (min, res.1)
+    };
+
+    let v = (0usize..3).map(|i| x0.extract_nth(i).unwrap()).collect::<Vec<VectorLWE>>();
+    
+    fn minvec<F: Fn(&VectorLWE, &VectorLWE) -> (VectorLWE, Vec<VectorLWE>)>(x: &[VectorLWE], f: &F) -> (VectorLWE, Vec<Vec<VectorLWE>>) {
+        let n = x.len();
+        let m = n/2;
+        println!("n,m: {},{}", n, m);
+        if n > 1 {
+            let x_i = minvec(&x[..m], f);
+            let x_j = minvec(&x[m..], f);
+            let res = f(&x_i.0,&x_j.0);
+            println!("x_i.1.len(): {}",x_i.1.len());
+            println!("x_j.1.len(): {}",x_j.1.len());
+            let mut idx = vec![res.1];
+            for k in 0..x_i.1.len() {
+                let mut tmp = x_i.1[k].clone();
+                let tst = x_j.1[k].clone();
+                tmp.extend(tst);
+                idx.push(tmp); 
+            }  
+            (res.0, idx) 
+        }
+        else {
+            (x[0].clone(),vec![vec![x[0].clone()]])
+        }
+    }  
+    
+    let res = minvec(&v, &minfun_bootstrap);
+    println!("min {:?}", res.0.decrypt_decode(&sk0).unwrap());
+    
+    for (i, lev) in res.1.iter().enumerate() {
+        println!("lev {} with len {}", i, lev.len());
+        for (j, item) in lev.iter().enumerate() {
+            println!("item {} with value {:?}", j, item.decrypt_decode(&sk0).unwrap());
+        }
+    }
+
     /*
     let o0 = VectorLWE::encode_encrypt(&sk0, &vec![1.; N-1], &enc)?;
 
