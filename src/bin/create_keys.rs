@@ -31,20 +31,26 @@ fn main() -> Result<(), CryptoAPIError> {
     let sk1_LWE = sk1_RLWE.to_lwe_secret_key();
     sk1_LWE.save(&sk1_LWE_path).unwrap();
 
-    // generate the key switching key
-    
-    println!("Creating key switching keys...");
-
-    let ksk01_path = format!("{}/ksk01_LWE.json",path);
-    let ksk10_path = format!("{}/ksk10_LWE.json",path);
-
-    let ksk_10 = LWEKSK::new(&sk1_LWE, &sk0_LWE, 2, 6);
-    ksk_10.save(&ksk10_path);//.unwrap();
-
-    let ksk_01 = LWEKSK::new(&sk0_LWE, &sk1_LWE, 2, 6);
-    ksk_01.save(&ksk01_path);//.unwrap();
 
     // bootstrapping keys
+
+    println!("Creating bootstrap key 00 ...");
+
+    let bsk00_path = format!("{}/bsk00_LWE.json",path);
+
+    let base_log: usize = 5;
+    let level: usize = 3;
+    let bsk = LWEBSK::new(&sk0_LWE, &sk0_RLWE, base_log, level);
+    bsk.save(&bsk00_path);
+        
+    println!("Creating bootstrap key 11 ...");
+    
+    let bsk11_path = format!("{}/bsk11_LWE.json",path);
+    
+    let base_log: usize = 5;
+    let level: usize = 3;
+    let bsk = LWEBSK::new(&sk1_LWE, &sk1_RLWE, base_log, level);
+    bsk.save(&bsk11_path);      
     
     println!("Creating bootstrap key 01 ...");
 
@@ -62,8 +68,22 @@ fn main() -> Result<(), CryptoAPIError> {
     let base_log: usize = 5;
     let level: usize = 3;
     let bsk = LWEBSK::new(&sk1_LWE, &sk0_RLWE, base_log, level);
-    bsk.save(&bsk10_path);
+    bsk.save(&bsk10_path);  
 
+    
+    // generate the key switching key
+    
+    println!("Creating key switching keys...");
+
+    let ksk01_path = format!("{}/ksk01_LWE.json",path);
+    let ksk10_path = format!("{}/ksk10_LWE.json",path);
+
+    let ksk_10 = LWEKSK::new(&sk1_LWE, &sk0_LWE, 2, 6);
+    ksk_10.save(&ksk10_path);//.unwrap();
+
+    let ksk_01 = LWEKSK::new(&sk0_LWE, &sk1_LWE, 2, 6);
+    ksk_01.save(&ksk01_path);//.unwrap();
+    
     Ok(())    
     
 }
